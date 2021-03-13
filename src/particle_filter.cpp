@@ -30,7 +30,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
    * NOTE: Consult particle_filter.h for more information about this method 
    *   (and others in this file).
    */
-  num_particles = 100;
+  num_particles = 150;
 
   // instantiate the normal distributions of car's initial position
   std::default_random_engine gen; // generate seed number for the normal distributions
@@ -114,7 +114,7 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
       }
     }
 
-    observations[i] = nearest_neighbor;
+    observations[i].id = nearest_neighbor.id;
   }
 }
 
@@ -156,8 +156,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     
     for (int j = 0; j < map_landmarks.landmark_list.size(); j++) {
       LandmarkObs landmark;
-
-      // check whether landmark within sensor range
+      
       if (dist(particle.x, particle.y,
 	       map_landmarks.landmark_list[j].x_f, map_landmarks.landmark_list[j].y_f) <= sensor_range) {
 	landmark.id = map_landmarks.landmark_list[j].id_i;
@@ -169,15 +168,14 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     }
 
     // associate observations to landmarks
-    vector<LandmarkObs> associated_landmarks(transformed_observations);
-    dataAssociation(predicted_landmarks, associated_landmarks);
+    dataAssociation(predicted_landmarks, transformed_observations);
 
     // set associations to each particle
     vector<int> associations;
     vector<double> sense_x, sense_y;
     
     for (int j = 0; j < transformed_observations.size(); j++) {
-      associations.push_back(associated_landmarks[j].id);
+      associations.push_back(transformed_observations[j].id);
       sense_x.push_back(transformed_observations[j].x);
       sense_y.push_back(transformed_observations[j].y);
     }
@@ -187,8 +185,16 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     // update weights
     particles[i].weight = 1;
     
-    for (int j = 0; j < associated_landmarks.size(); j++) {
-      LandmarkObs mu = associated_landmarks[j];
+    for (int j = 0; j < transformed_observations.size(); j++) {
+
+      // get the corresponding landmark
+      LandmarkObs mu;
+      for (int k = 0; k < predicted_landmarks.size(); k++) {
+	if (predicted_landmarks[k].id == transformed_observations[j].id) {
+	  mu = predicted_landmarks[k];
+	}
+      }
+      
       LandmarkObs obs = transformed_observations[j];
       
       // Gaussian PDF of observation, given predicted associated landmark
