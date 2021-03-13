@@ -38,6 +38,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
   std::normal_distribution<double> N_y(y, std[1]);
   std::normal_distribution<double> N_theta(theta, std[2]);
 
+  // generate random particles
   for (int i = 0; i < num_particles; i++) {
     Particle particle;
     particle.id = i;
@@ -62,7 +63,33 @@ void ParticleFilter::prediction(double delta_t, double std_pos[],
    *  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
    *  http://www.cplusplus.com/reference/random/default_random_engine/
    */
+  double new_x, new_y, new_theta;
+  std::default_random_engine gen; // generate seed number for the normal distributions
 
+  // predict each particle movement
+  for (int i = 0; i < num_particles; i++) {
+    Particle particle = particles[i]; // save particle to be predicted
+    
+    if (yaw_rate == 0) {
+      new_x = particle.x + (delta_t * velocity * cos(particle.theta));
+      new_y = particle.y + (delta_t * velocity * sin(particle.theta));
+      new_theta = particle.theta;
+    } else {
+      new_x = particle.x + (velocity / yaw_rate) * (sin(particle.theta + (yaw_rate * delta_t)) - sin(particle.theta));
+      new_y = particle.y + (velocity / yaw_rate) * (cos(particle.theta) - cos(particle.theta + (yaw_rate * delta_t)));
+      new_theta = particle.theta + (yaw_rate * delta_t);
+    }
+
+    // instantiate normal distributions of predicted states
+    std::normal_distribution<double> N_x(new_x, std_pos[0]);
+    std::normal_distribution<double> N_y(new_y, std_pos[1]);
+    std::normal_distribution<double> N_theta(new_theta, std_pos[2]);
+
+    // add noise to prediction
+    particles[i].x = N_x(gen);
+    particles[i].y = N_y(gen);
+    particles[i].theta = fmod(N_theta(gen), (2 * M_PI));
+  }
 }
 
 void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted, 
@@ -94,6 +121,8 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
    *   and the following is a good resource for the actual equation to implement
    *   (look at equation 3.33) http://planning.cs.uiuc.edu/node99.html
    */
+
+  // Normalize weights for probability in resampling
 
 }
 
