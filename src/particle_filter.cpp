@@ -30,8 +30,27 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
    * NOTE: Consult particle_filter.h for more information about this method 
    *   (and others in this file).
    */
-  num_particles = 0;  // TODO: Set the number of particles
+  num_particles = 100;
 
+  // instantiate the normal distributions of car's initial position
+  std::default_random_engine gen; // generate seed number for the normal distributions
+  std::normal_distribution<double> N_x(x, std[0]);
+  std::normal_distribution<double> N_y(y, std[1]);
+  std::normal_distribution<double> N_theta(theta, std[2]);
+
+  for (int i = 0; i < num_particles; i++) {
+    Particle particle;
+    particle.id = i;
+    particle.x = N_x(gen);
+    particle.y = N_y(gen);
+    particle.theta = N_theta(gen);
+    particle.weight = 1;
+
+    particles.push_back(particle);
+    weights.push_back(particle.weight);
+  }
+
+  is_initialized = true;
 }
 
 void ParticleFilter::prediction(double delta_t, double std_pos[], 
