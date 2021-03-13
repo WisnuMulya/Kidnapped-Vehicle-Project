@@ -178,8 +178,8 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     
     for (int j = 0; j < transformed_observations.size(); j++) {
       associations.push_back(associated_landmarks[j].id);
-      sense_x.push_back(associated_landmarks[j].x);
-      sense_y.push_back(associated_landmarks[j].y);
+      sense_x.push_back(transformed_observations[j].x);
+      sense_y.push_back(transformed_observations[j].y);
     }
     
     SetAssociations(particles[i], associations, sense_x, sense_y);
@@ -193,8 +193,8 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
       
       // Gaussian PDF of observation, given predicted associated landmark
       double gauss_norm = 1 / (2 * M_PI * std_landmark[0] * std_landmark[1]);
-      double exponent = exp((pow(obs.x - mu.x, 2) / (2 * pow(std_landmark[0], 2))) +
-			    (pow(obs.y - mu.y, 2) / (2 * pow(std_landmark[1], 2))));
+      double exponent = exp(-((pow(obs.x - mu.x, 2) / (2 * pow(std_landmark[0], 2))) +
+			     (pow(obs.y - mu.y, 2) / (2 * pow(std_landmark[1], 2)))));
       double obs_p = exponent / gauss_norm;
       
       particles[i].weight = particles[i].weight * obs_p;
